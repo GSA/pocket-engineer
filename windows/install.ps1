@@ -48,7 +48,7 @@ function Ensure-User([string]$Distro) {
     Say 'Ubuntu needs a user name and password of its own (they do not have to match Windows).' 'Cyan'
     do { $name = (Read-Host 'Choose a user name (lowercase letters, e.g. jsmith)').Trim() }
     until ($name -match '^[a-z][a-z0-9_-]{0,31}$')
-    if ((Invoke-Wsl "-d `"$Distro`" -u root --exec adduser --gecos , $name") -ne 0) {
+    if ((Invoke-Wsl "-d $Distro -u root --exec adduser --gecos , $name") -ne 0) {
         Fail 'Could not create the Ubuntu user. Run "Install Engineer" again.'
     }
     & wsl.exe -d $Distro -u root --exec usermod -aG sudo $name | Out-Null

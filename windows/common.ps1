@@ -37,14 +37,15 @@ function Get-Distros {
 }
 
 # Runs wsl.exe attached to this console window (so prompts and full-screen programs work)
-# and returns its exit code. Arguments must not contain double quotes.
+# and returns its exit code. Distro names have no spaces, so they are not quoted
+# (wsl.exe would keep the quotes as part of the name).
 function Invoke-Wsl([string]$Arguments) {
     $process = Start-Process -FilePath 'wsl.exe' -ArgumentList $Arguments -NoNewWindow -Wait -PassThru
     return $process.ExitCode
 }
 
 function Invoke-Linux([string]$Distro, [string]$Command) {
-    return Invoke-Wsl "-d `"$Distro`" --cd ~ --exec bash -lc `"$Command`""
+    return Invoke-Wsl "-d $Distro --cd ~ --exec bash -lc `"$Command`""
 }
 
 function Get-LinuxOutput([string]$Distro, [string]$Command) {
@@ -74,5 +75,5 @@ function Start-KeepAwake([string]$Distro) {
         Where-Object { $_.CommandLine -like '*engineer-keep-awake*' }
     if ($running) { return }
     Start-Process -WindowStyle Hidden -FilePath 'wsl.exe' `
-        -ArgumentList "-d `"$Distro`" --exec bash -c `"exec -a engineer-keep-awake sleep infinity`""
+        -ArgumentList "-d $Distro --exec bash -c `"exec -a engineer-keep-awake sleep infinity`""
 }
