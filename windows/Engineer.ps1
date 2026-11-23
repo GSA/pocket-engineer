@@ -1,63 +1,50 @@
-# Engineer shortcuts: each Start menu / desktop shortcut runs this script with one action.
+# Engineer desktop shortcuts: each one runs this script with one action.
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet('pi', 'copilot', 'key', 'usage', 'check', 'update', 'remove')]
+    [ValidateSet('pi', 'copilot', 'key', 'usage')]
     [string]$Action
 )
 
 . (Join-Path $PSScriptRoot 'common.ps1')
 
 $distro = Require-Installed
-$engineer = '~/engineer/engineer'
+
+function Open-Assistant([string]$Title, [string]$Name) {
+    $Host.UI.RawUI.WindowTitle = $Title
+    Say 'Updating the USAi model list...' 'Cyan'
+    if ((Invoke-Linux $distro "$Launcher $Name") -ne 0) { Pause-Window }
+}
+
+function Test-Dashboard {
+    try {
+        $null = Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 "http://127.0.0.1:$DashboardPort/api/ping"
+        return $true
+    } catch { return $false }
+}
 
 switch ($Action) {
-    'pi' {
-        $Host.UI.RawUI.WindowTitle = 'Pi (AI assistant)'
-        Invoke-Linux $distro "$engineer pi" | Out-Null
-    }
-    'copilot' {
-        $Host.UI.RawUI.WindowTitle = 'Copilot (AI assistant)'
-        Invoke-Linux $distro "$engineer copilot" | Out-Null
-    }
+    'pi' { Open-Assistant 'Pi (AI assistant)' 'pi' }
+    'copilot' { Open-Assistant 'Copilot (AI assistant)' 'copilot' }
     'key' {
         $Host.UI.RawUI.WindowTitle = 'Update USAi key'
         Say 'Get your key from the USAi website, copy it, then paste it below.' 'Cyan'
         Say 'Tip: right-click pastes in this window. The key stays hidden while you paste.'
         Say ''
-        if ((Invoke-Linux $distro "$engineer key") -eq 0) { Say 'Done.' 'Green' }
+        Invoke-Linux $distro "$Launcher key" | Out-Null
         Pause-Window
     }
     'usage' {
-        Say 'Starting the AI usage dashboard...' 'Cyan'
-        Start-KeepAwake $distro
-        if ((Invoke-Linux $distro "$engineer start >/dev/null") -ne 0) {
-            Fail 'The dashboard did not start. Open "Check Engineer" to see what is wrong.'
-        }
-        Start-Process "http://127.0.0.1:$UsagePort/"
-    }
-    'check' {
-        $Host.UI.RawUI.WindowTitle = 'Check Engineer'
-        Invoke-Linux $distro "$engineer doctor" | Out-Null
-        Pause-Window
-    }
-    'update' {
-        $Host.UI.RawUI.WindowTitle = 'Update Engineer'
-        Invoke-Linux $distro "$engineer update" | Out-Null
-        Pause-Window
-    }
-    'remove' {
-        $Host.UI.RawUI.WindowTitle = 'Remove Engineer'
-        Say 'This removes Engineer from Ubuntu. Your tasks, reviews and settings are kept unless you choose otherwise.'
-        if ((Read-Host 'Type REMOVE to continue') -ne 'REMOVE') { exit 0 }
-        if ((Invoke-Linux $distro "$engineer uninstall") -eq 0) {
-            $menu = Join-Path ([Environment]::GetFolderPath('Programs')) 'Engineer'
-            $desktop = [Environment]::GetFolderPath('Desktop')
-            Remove-Item -Recurse -Force $menu -ErrorAction SilentlyContinue
-            foreach ($name in 'Pi (AI assistant)', 'Update USAi key', 'AI usage dashboard') {
-                Remove-Item -Force (Join-Path $desktop "$name.lnk") -ErrorAction SilentlyContinue
+        if (-not (Test-Dashboard)) {
+            Say 'Starting the AI usage dashboard...' 'Cyan'
+            # The hidden process keeps Ubuntu (and the dashboard) running until you sign out.
+            Start-Process -WindowStyle Hidden -FilePath 'wsl.exe' `
+                -ArgumentList "-d $distro --cd ~ --exec bash -lc `"$Launcher dashboard`""
+            $deadline = (Get-Date).AddSeconds(60)
+            while (-not (Test-Dashboard)) {
+                if ((Get-Date) -gt $deadline) { Fail 'The dashboard did not start. Run "Install Engineer" again.' }
+                Start-Sleep -Seconds 1
             }
-            Say 'Engineer was removed. Ubuntu itself is still installed.' 'Green'
         }
-        Pause-Window
+        Start-Process "http://127.0.0.1:$DashboardPort/"
     }
 }
