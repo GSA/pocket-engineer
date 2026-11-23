@@ -83,8 +83,3 @@ they are missing.
   variables.
 - `usai.py dashboard`: runs AgentsView at `http://127.0.0.1:18088/`. It reads
   the default Pi and Copilot session folders.
-
-If you used an earlier version of this installer, it left
-[GSA/the_engineer](https://github.com/GSA/the_engineer) in `~/engineer`. The
-new shortcuts reuse its saved USAi key if you have not saved one yet. To
-remove the old install, run `~/engineer/engineer uninstall` in Ubuntu.
