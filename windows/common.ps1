@@ -6,7 +6,8 @@ $env:WSL_UTF8 = '1'   # make wsl.exe print UTF-8 instead of UTF-16
 $EngineerHome = Join-Path $env:LOCALAPPDATA 'Engineer'
 $DistroFile = Join-Path $EngineerHome 'distro.txt'
 $DefaultDistro = 'Ubuntu-24.04'
-$UsagePort = 18080
+$Launcher = 'python3 ~/.local/share/simple-engineer/usai.py'
+$DashboardPort = 18088
 
 function Say([string]$Text, [string]$Color = 'White') {
     Write-Host $Text -ForegroundColor $Color
@@ -66,14 +67,4 @@ function Require-Installed {
     $distro = Get-SavedDistro
     if (-not $distro) { Fail 'Engineer is not installed yet. Run "Install Engineer" first.' }
     return $distro
-}
-
-function Start-KeepAwake([string]$Distro) {
-    # WSL stops Ubuntu (and the dashboards) when no Windows program is using it,
-    # so a hidden background process keeps it running until you sign out.
-    $running = Get-CimInstance Win32_Process -Filter "Name = 'wsl.exe'" -ErrorAction SilentlyContinue |
-        Where-Object { $_.CommandLine -like '*engineer-keep-awake*' }
-    if ($running) { return }
-    Start-Process -WindowStyle Hidden -FilePath 'wsl.exe' `
-        -ArgumentList "-d $Distro --exec bash -c `"exec -a engineer-keep-awake sleep infinity`""
 }
