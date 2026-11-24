@@ -30,7 +30,6 @@ KEY_FILE = CONFIG / "usai-api-key"
 MODELS_FILE = CONFIG / "usai-models.json"
 SETTINGS_FILE = CONFIG / "settings.json"
 PI_DIR = HOME / ".pi/agent"
-OLD_ENGINEER_KEY = HOME / "engineer/.local/environment/secrets/usai-api-key"
 DASHBOARD_PORT = 18088
 CA_BUNDLE = "/etc/ssl/certs/ca-certificates.crt"
 
@@ -134,11 +133,6 @@ def key_command():
 def require_key():
     if load_key():
         return
-    if OLD_ENGINEER_KEY.is_file():
-        write_private(KEY_FILE, OLD_ENGINEER_KEY.read_text())
-        if load_key():
-            print("Using the USAi key from your earlier Engineer install.")
-            return
     print("No USAi key is saved yet.")
     key_command()
 
