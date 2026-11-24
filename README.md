@@ -1,4 +1,4 @@
-# Simple Engineer
+# Pocket Engineer
 
 Installs an AI assistant that uses GSA's USAi models on your Windows PC with one double-click.
 You choose:
